@@ -1,9 +1,46 @@
 import geopandas
 import pandas as pd
-import xarray as xr 
+import xarray as xr
 import dataimports.waterboundary as wbd 
 
 from shapely.geometry import Polygon
+
+def aggregateprocessedfiles(directory: str, years: range) -> pd.DataFrame:
+    '''
+    Generates a new dataframe in the form: 
+        index       1   2   ...   n-1   n
+        <year 1>                        
+        <year 2>                        
+        .
+        .
+        .
+        <year t - 1>
+        <year t>    .   .   ...     .   .    
+    from a specified set files, where each row in the new dataframe contains the year's n grid cell's precipitation data.
+    The input files are imported from a specified directory with file names in the form: 'prec.<year>.csv' where <year> is a year in the specified list of years.
+    '''
+    first: bool = True
+    for yr in years:
+        if first:
+            df = pd.read_csv(directory + 'prec.' + str(yr) + '.csv').sort_values(by = ['id']).filter(['id', 'prec']).rename(columns = {'prec' : str(yr)}).set_index('id').T
+            first = False
+        else:
+            df2 = pd.read_csv(directory + 'prec.' + str(yr) + '.csv').sort_values(by = ['id']).filter(['id', 'prec']).rename(columns = {'prec' : str(yr)}).set_index('id').T
+            df = df.append(df2)
+    return df
+
+def eventdates(directory: str, years: range) -> pd.DataFrame:
+    '''
+    Creates a dictionary with the year keys and dates stored as string values.
+    '''
+    events = []
+    for yr in years:      
+        df = pd.read_csv(directory + 'prec.' + str(yr) + '.csv')
+        date = df.iloc[0].loc['time']
+        day = df['day'].iloc[0]
+        month = df['month'].iloc[0]
+        events.append([date, yr, month, day])
+    return pd.DataFrame(events, columns = ['date', 'year', 'month', 'day'])
 
 def inputfilepaths(directory: str, vars: list, yrs: list) -> list:
     '''
@@ -16,10 +53,11 @@ def inputfilepaths(directory: str, vars: list, yrs: list) -> list:
     Output: a list of string file paths.
     '''
     files: list = []
+    filename: str = ''
     print('Input file list: \n\t[')
     for var in vars:
         for yr in yrs:
-            filename: str = str(var) + '.' + str(yr) + '.nc'
+            filename = str(var) + '.' + str(yr) + '.nc'
             files.append(directory + filename)
             print('\t' + '  ' + filename)
     print('\t]')
@@ -52,8 +90,7 @@ def outputfilepath(directory: str, file: str, extension: str = '.csv'):
     print('\t' + '  ' + filename)
     return directory + filename
 
-def processfiles(files: list, outputs: list, box: list, shape: geopandas.GeoDataFrame, shapearea: float, maxdaydirectory: str):
-    #dfs = []
+def processfiles(files: list, outputs: list, box: list, shape: geopandas.GeoDataFrame, shapearea: float, maxdaydirectory: str) -> dict:
     maxdays = {}
     for i, file in enumerate(files):
         print(i)
@@ -64,13 +101,12 @@ def processfiles(files: list, outputs: list, box: list, shape: geopandas.GeoData
             print(ids.head())
         print('\t Merging areas and IDs...')
         df = mergebylatlon(df, ids)
-        #dfs.append(df)
         df.to_csv(outputs[i])
         day = maxday(df, outputfilepath(maxdaydirectory, file))
         maxdays.update({day[0] : day[1]})
     return maxdays
 
-def maxday(df, outpath: str):
+def maxday(df, outpath: str) -> tuple:
     print('Computing max day:')
     df['weightedprec'] = df['prec'] * df['areaweight']
     day = df.groupby(['time', 'year', 'month', 'day'])['weightedprec'].sum().reset_index()
@@ -174,8 +210,6 @@ def km2areasandIDs(gdf: geopandas.GeoDataFrame, totalarea: float):
 def mergebylatlon(left, right):
     df = left.merge(right, on=['lat', 'lon'], how='inner')
     return df
-
-
 
 def importlivnehfiles(filepaths: list, maskingdata = geopandas.GeoDataFrame, grids: bool = True, crs: str = '4326', max: bool = True, outputfilepaths: list = []):
     '''
