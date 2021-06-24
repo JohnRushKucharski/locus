@@ -22,7 +22,6 @@ outputpath: str = 'C:/Users/q0hecjrk/Documents/_Projects/northbranch/data/'
 # %% [markdown]
 # 2. Livneh Data
 # %%
-#year = np.arange(1915, 2012, 1)
 years: list = [*range(1915, 2012, 1)]
 variables: list = ['prec']
 livnehdirectory: str = importpath +'Livneh/Daily/'

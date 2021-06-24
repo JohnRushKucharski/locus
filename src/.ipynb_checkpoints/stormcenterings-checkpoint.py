@@ -55,12 +55,12 @@ df.head()
 # ## Normalization Routines
 # <p>The data must be normalized, otherwise outliers will dominate the principal component analysis and clustering.
 # The data can reasonably be expected to contain outliers for several reasons:
-
-# 1. Event Magnitudes - the events being analyzed represent annaul maximum days of precipitation. 
+#
+#  1. Event Magnitudes - the events being analyzed represent annaul maximum days of precipitation. 
 # Therefore, to one degree or another all of the events being analyzed are 'outliers' from the perspective of the underlying precipitation distribution.
 # Maximum annual precipitation day values such as these are typically fit to an extreme values distribution (EVD), used to model events taken from the tail of some other distribution.
 # The EVDs model the asympotic behavior or the under distributions tail (or tails), therefore we should expect our 97 year sample to exhibit some of this asymptotic behanvior.
-
+# 
 # 2. Spatial Outliers - one would expect rainfall totals to be higher at higher elevations, as adiabatic cooling forces more moisture to rain out of the air.
 # This orographic effect is likely to lead to some grid cells (or columns) with substaintially larger means and variability (perhaps). 
 # Secondly, large rain event over an areas the size of the one being analyzed are typically dominated by advective synoptical scale events,
@@ -70,12 +70,12 @@ df.head()
 # <b>Two</b> normalization routines are explored below. For simplicity they are refered to as: 
 # (1) the "hypothesis-based" routine, and (2) the "nieve" routine.
 # Both normalization routines normalize the data using the equation: 
-
+# 
 #       (x - u) / s
-
+# 
 # where x is the observed rainfall total for the cell in the dataset, u is the mean of the data being normalized, and s is the standard deviation (of the data being normalized).
 # The methods differ primarily in the data used to measure u and s. 
-
+# 
 # The "hypothesis-based" normalization routine is a two step process. 
 # <b>First</b> events (or rows) of data are normalized. 
 # During this step, u represents an average amount of rainfall recieved in a livneh grid cell <em>during that event</em>.
@@ -88,7 +88,7 @@ df.head()
 # In this case, the value of 2 may be an average value <em>for that grid cell</em> to help disentangle the orographic and storm centering patterns impact on rainfall totals we normalize this column of data.
 # If in fact the value 2 in the first step was a local (i.e. grid cell average) we wil be left with a data set that describes the deviations from this localized average in standard deviation unit.
 # For example, now a value of 2 would represent an anomolously high rainfall total <em>for that grid cell</em> based on its average across all event in the period of analysis.
-
+#
 # The "nieve" normalization routine. Simply applies the normalization equation to all rows and columns simultaneously.
 # Thus, the mean: u represents the average livneh grid cell total across all grid cells and events. 
 # A value of 2 after this normalization routine would indicate a large rainfall total (two standard deviation above the mean) for that grid cell,
